@@ -227,44 +227,31 @@ module Kernel
     raise TypeError unless path.is_a?(::String)
 
     realpath = nil
+    feature = path
 
     # if extname == ".rb" => lookup feature -> resolve feature -> load
     # if extname != ".rb" => append ".rb" - lookup feature -> resolve feature -> lookup orig (no ext) -> resolve orig (no ext) -> load
     if File.extname(path) != ".rb"
-      return false if RequireHooks::KernelPatch::Features.feature_loaded?(path + ".rb")
-
-      loaded = RequireHooks::KernelPatch::Features::LOCK.lock_feature(path + ".rb") do |loaded|
-        return false if loaded
-
-        realpath = RequireHooks::KernelPatch::Features.feature_path(path + ".rb")
-
-        if realpath
-          $LOADED_FEATURES << realpath
-          RequireHooks::KernelPatch.load(realpath)
-          true
-        end
-      end
-
-      return true if loaded
-    end
-
-    return false if RequireHooks::KernelPatch::Features.feature_loaded?(path)
-
-    loaded = RequireHooks::KernelPatch::Features::LOCK.lock_feature(path) do |loaded|
-      return false if loaded
-
-      realpath = RequireHooks::KernelPatch::Features.feature_path(path)
+      realpath = RequireHooks::KernelPatch::Features.feature_path(path + ".rb")
 
       if realpath
-        $LOADED_FEATURES << realpath
-        RequireHooks::KernelPatch.load(realpath)
-        true
+        feature = path + ".rb"
       end
     end
 
-    return true if loaded
+    realpath ||= RequireHooks::KernelPatch::Features.feature_path(path)
 
-    require_without_require_hooks(path)
+    return require_without_require_hooks(path) unless realpath
+
+    return false if RequireHooks::KernelPatch::Features.feature_loaded?(feature)
+
+    RequireHooks::KernelPatch::Features::LOCK.lock_feature(feature) do |loaded|
+      return false if loaded
+
+      $LOADED_FEATURES << realpath
+      RequireHooks::KernelPatch.load(realpath)
+      true
+    end
   rescue LoadError => e
     $LOADED_FEATURES.delete(realpath) if realpath
     warn "RequireHooks failed to require '#{path}': #{e.message}"
