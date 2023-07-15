@@ -15,7 +15,7 @@ Require hooks allows you to interfere with `Kernel#require` (incl. `Kernel#requi
 ## Examples
 
 - [Ruby Next][ruby-next]
-- Freezolite (coming soon)
+- [Freezolite](https://github.com/ruby-next/freezolite)
 
 ## Installation
 
