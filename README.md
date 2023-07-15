@@ -118,6 +118,11 @@ The _around load_ hooks are executed for all files independently of whether they
 
 Thus, if you introduce new source transformers or hijackers, you must invalidate the cache. (We plan to implement automatic invalidation in future versions.)
 
+## Limitations
+
+- `Kernel#load` with a wrap argument (e.g., `load "some_path", true` or `load "some_path", MyModule)`) is not supported (fallbacked to the original implementation). The biggest challenge here is to support constants nesting.
+- Some very edgy symlinking scenarios are not supported (unlikely to affect real-world projects).
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at [https://github.com/ruby-next/require-hooks](https://github.com/ruby-next/require-hooks).
