@@ -1,0 +1,33 @@
+require:
+  - standard
+
+inherit_gem:
+  standard: config/base.yml
+
+AllCops:
+  Exclude:
+    - 'bin/*'
+    - 'tmp/**/*'
+    - 'Gemfile'
+    - 'vendor/**/*'
+    - 'gemfiles/**/*'
+    - 'lib/.rbnext/**/*'
+    - 'lib/generators/**/templates/*.rb'
+    - '.github/**/*'
+    - '**/*/syntax_error.rb'
+    - 'spec/fixtures/**/*.rb'
+    - 'spec/core/**/*.rb'
+    - 'mspec/**/*'
+  DisplayCopNames: true
+  SuggestExtensions: false
+  NewCops: disable
+  TargetRubyVersion: 2.5
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  Exclude:
+    - 'spec/require-hooks/fixtures/*.rb'
+
+Style/GlobalVars:
+  Exclude:
+    - 'spec/**/*'

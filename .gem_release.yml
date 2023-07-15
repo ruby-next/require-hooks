@@ -1,0 +1,4 @@
+bump:
+  file: lib/require-hooks/version.rb
+  skip_ci: true
+
