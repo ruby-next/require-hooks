@@ -4,8 +4,10 @@ module RequireHooks
   module Bootsnap
     module CompileCacheExt
       def input_to_storage(source, path, *)
-        new_contents = RequireHooks.perform_source_transform(path)
-        hijacked = RequireHooks.try_hijack_load(path, new_contents)
+        ctx = RequireHooks.context_for(path)
+
+        new_contents = ctx.perform_source_transform(path)
+        hijacked = ctx.try_hijack_load(path, new_contents)
 
         if hijacked
           raise TypeError, "Unsupported bytecode format for #{path}: #{hijack.class}" unless hijacked.is_a?(::RubyVM::InstructionSequence)
@@ -24,7 +26,7 @@ module RequireHooks
       # Around hooks must be performed every time we trigger a file load, even if
       # the file is already cached.
       def load_iseq(path)
-        RequireHooks.run_around_load_callbacks(path) { super }
+        RequireHooks.context_for(path).run_around_load_callbacks(path) { super }
       end
     end
   end

@@ -7,9 +7,13 @@ module RequireHooks
   module KernelPatch
     class << self
       def load(path)
-        RequireHooks.run_around_load_callbacks(path) do
-          new_contents = RequireHooks.perform_source_transform(path)
-          hijacked = RequireHooks.try_hijack_load(path, new_contents)
+        ctx = RequireHooks.context_for(path)
+
+        ctx.run_around_load_callbacks(path) do
+          next load_without_require_hooks(path) unless ctx.source_transform? || ctx.hijack?
+
+          new_contents = ctx.perform_source_transform(path)
+          hijacked = ctx.try_hijack_load(path, new_contents)
 
           return try_evaluate(path, hijacked) if hijacked
 
@@ -104,7 +108,7 @@ module RequireHooks
 
           # Recursive require
           if lock.owned? && lock.locked?
-            warn "circular require considered harmful: #{fname}"
+            warn "loading in progress, circular require considered harmful: #{fname}"
             return yield(true)
           end
 
@@ -242,6 +246,10 @@ module Kernel
     realpath ||= RequireHooks::KernelPatch::Features.feature_path(path)
 
     return require_without_require_hooks(path) unless realpath
+
+    ctx = RequireHooks.context_for(realpath)
+
+    return require_without_require_hooks(path) if ctx.empty?
 
     return false if RequireHooks::KernelPatch::Features.feature_loaded?(feature)
 

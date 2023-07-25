@@ -6,18 +6,16 @@ $around_hooks_enabled = false
 $events = []
 
 # SyntaxSuggest example
-RequireHooks.around_load do |path, &block|
+RequireHooks.around_load(patterns: [File.join(__dir__, "fixtures/*.rb")], exclude_patterns: ["*/hi_jack.rb"]) do |path, &block|
   next block.call unless $around_hooks_enabled
-  next block.call unless path =~ /fixtures\/(syntax_error|freeze)\.rb$/
 
   $events << [:before, File.basename(path)]
 
   block.call
 end
 
-RequireHooks.around_load do |path, &block|
+RequireHooks.around_load(patterns: [File.join(__dir__, "fixtures/*.rb")], exclude_patterns: ["*/hi_jack.rb"]) do |path, &block|
   next block.call unless $around_hooks_enabled
-  next block.call unless path =~ /fixtures\/(syntax_error|freeze)\.rb$/
 
   begin
     block.call

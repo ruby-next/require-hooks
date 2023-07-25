@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require_relative "../support/command_testing"
 
 describe "require-hooks: bootsnap mode" do

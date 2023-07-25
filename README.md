@@ -45,12 +45,13 @@ Then, you can add hooks:
 
 ```ruby
 # Simple logging
-RequireHooks.around_load do |path, &block|
+RequireHooks.around_load(patterns: ["/gem/dir/*.rb"]) do |path, &block|
   puts "Loading #{path}"
   block.call.tap { puts "Loaded #{path}" }
 end
 
-# Error enrichment
+# Error enrichment.
+# No patterns — all files are affected.
 RequireHooks.around_load do |path, &block|
   block.call
 rescue SyntaxError => e
@@ -63,8 +64,7 @@ The return value MUST be a result of calling the passed block.
 - **source_transform:** perform source-to-source transformations.
 
 ```ruby
-RequireHooks.source_transform do |path, source|
-  next unless path =~ /my_project\/.*/
+RequireHooks.source_transform(patterns: ["/my_project/*.rb"], exclude_patterns: ["/my_project/vendor/*"]) do |path, source|
   source ||= File.read(path)
   "# frozen_string_literal: true\n#{source}"
 end
@@ -75,9 +75,8 @@ The return value MUST be either String (new source code) or `nil` (indicating th
 - **hijack_load:** a hook that is used to manually compile byte code for VM to load it.
 
 ```ruby
-RequireHooks.hijack_load do |path, source|
-  next unless path =~ /my_project\/.*/
-
+# Pattern can be a Proc. If it returns `true`, the hijacker is used.
+RequireHooks.hijack_load(patterns: ["/my_project/*.rb"]) do |path, source|
   source ||= File.read(path)
   if defined?(RubyVM::InstructionSequence)
     RubyVM::InstructionSequence.compile(source)
@@ -88,6 +87,8 @@ end
 ```
 
 The return value is platform-specific. If there are multiple _hijackers_, the first one that returns a non-`nil` value is used, others are ignored.
+
+**NOTE:** The `patterns` and `exclude_patterns` arguments accept globs as recognized by [File.fnmatch](https://rubyapi.org/3.2/o/file#method-c-fnmatch).
 
 ## Modes
 

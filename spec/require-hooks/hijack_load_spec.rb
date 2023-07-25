@@ -5,19 +5,17 @@ require_relative "../spec_helper"
 $hijack_load_enabled = false
 $source_transform_enabled = false
 
-RequireHooks.source_transform do |path, source|
+RequireHooks.source_transform(patterns: [File.join(__dir__, "fixtures/*.rb")]) do |path, source|
   next unless $hijack_load_enabled
   next unless $source_transform_enabled
-  next unless path =~ /fixtures\/freeze\.rb$/
 
   source ||= File.read(path)
 
   source.gsub(/cold/, "hot")
 end
 
-RequireHooks.hijack_load do |path, source|
+RequireHooks.hijack_load(patterns: [File.join(__dir__, "fixtures/freeze.rb")]) do |path, source|
   next unless $hijack_load_enabled
-  next unless path =~ /fixtures\/freeze\.rb$/
 
   iseq =
     if source
