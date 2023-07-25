@@ -33,11 +33,15 @@ spec.add_dependency "require-hooks"
 
 ## Usage
 
-To enable hooks, you need to load `require-hooks/setup` as early as possible. For example, in your gem's entrypoint:
+To enable hooks, you need to load `require-hooks/setup` before any code that you want to pre-process via hooks:
 
 ```ruby
 require "require-hooks/setup"
 ```
+
+For example, in an application (e.g., Rails), you may want to only process the source files you own, so you must activate Require Hooks after loading the dependencies (e.g., in the `config/application.rb` file right after `Bundler.require(*)`).
+
+If you want to pre-process all files, you can activate Require Hooks earlier.
 
 Then, you can add hooks:
 
@@ -123,6 +127,61 @@ Thus, if you introduce new source transformers or hijackers, you must invalidate
 
 - `Kernel#load` with a wrap argument (e.g., `load "some_path", true` or `load "some_path", MyModule)`) is not supported (fallbacked to the original implementation). The biggest challenge here is to support constants nesting.
 - Some very edgy symlinking scenarios are not supported (unlikely to affect real-world projects).
+
+## Performance
+
+We conducted a benchmark to measure the performance overhead of Require Hooks using a large Rails project with the following characteristics:
+
+```sh
+$ find config/ lib/ app/ -name "*.rb" | wc -l
+
+2689
+```
+
+```sh
+$ bundle list | wc -l
+
+427
+```
+
+Total number of `#require` calls: **12741**.
+
+We activated Require Hooks in the very start of the program (`config/boot.rb`).
+
+There is a single around load hook to count all the calls:
+
+```ruby
+counter = 0
+RequireHooks.around_load do |_, &block|
+  counter += 1
+  block.call
+end
+
+at_exit { puts "Total hooked calls: #{counter}" }
+```
+
+## Results
+
+All tests made with `eager_load=true`.
+
+Test script: `time bundle exec rails runner 'puts "done"'`.
+
+  |                                   |              |
+|-------------------------------------|--------------|
+| baseline                            |    29s       |
+| baseline w/bootsnap                 |    12s       |
+| rhooks (iseq)                       |    30s       |
+| rhooks (patch)                      |    **8m**    |
+| rhooks (bootsnap)                   |    12s       |
+
+You can see that requiring tons of files with Require Hooks in patch mode is very slow for now. Why? Mostly because we MUST check `$LOADED_FEATURES` for the presence of the file we want to load and currently we do this via `$LOADED_FEATURES.include?(path)` call, which becomes very slow when `$LOADED_FEATURES` is huge. Thus, we recommend activating Require Hooks after loading all the dependencies and limiting the scope of affected files (via the `patterns` option) on non-MRI platforms to avoid this overhead.
+
+**NOTE:** Why Ruby's internal implementations is fast despite from doing the same checks? It uses an internal hash table to keep track of the loaded features (`vm->loaded_features_realpaths`), not an array. Unfortunately, it's not accessible from Ruby.
+
+Here are the numbers for the same project with scoped hooks (only some folders) activated after `Bundler.require(*)`:
+
+- 732 files affected: 2m36s (vs. 30s w/o hooks)
+- 153 files affected: 55s (vs. 30s w/o hooks)
 
 ## Contributing
 
