@@ -108,7 +108,7 @@ module RequireHooks
 
           # Recursive require
           if lock.owned? && lock.locked?
-            warn "loading in progress, circular require considered harmful: #{fname}"
+            warn "loading in progress, circular require considered harmful: #{fname}" if RequireHooks.print_warnings
             return yield(true)
           end
 
@@ -262,7 +262,7 @@ module Kernel
     end
   rescue LoadError => e
     $LOADED_FEATURES.delete(realpath) if realpath
-    warn "RequireHooks failed to require '#{path}': #{e.message}"
+    warn "RequireHooks failed to require '#{path}': #{e.message}" if RequireHooks.print_warnings
     require_without_require_hooks(path)
   rescue Errno::ENOENT, Errno::EACCES
     raise LoadError, "cannot load such file -- #{path}"
@@ -296,7 +296,7 @@ module Kernel
   alias_method :load_without_require_hooks, :load
   def load(path, wrap = false)
     if wrap
-      warn "RequireHooks does not support `load(smth, wrap: ...)`. Falling back to original `Kernel#load`"
+      warn "RequireHooks does not support `load(smth, wrap: ...)`. Falling back to original `Kernel#load`" if RequireHooks.print_warnings
       return load_without_require_hooks(path, wrap)
     end
 
@@ -320,7 +320,7 @@ module Kernel
   rescue Errno::ENOENT, Errno::EACCES
     raise LoadError, "cannot load such file -- #{path}"
   rescue LoadError => e
-    warn "RuquireHooks failed to load '#{path}': #{e.message}"
+    warn "RuquireHooks failed to load '#{path}': #{e.message}" if RequireHooks.print_warnings
     load_without_require_hooks(path)
   end
 end

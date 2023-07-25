@@ -58,6 +58,8 @@ module RequireHooks
   end
 
   class << self
+    attr_accessor :print_warnings
+
     # Define a block to wrap the code loading.
     # The return value MUST be a result of calling the passed block.
     # For example, you can use such hooks for instrumentation, debugging purposes.
