@@ -8,7 +8,7 @@ RequireHooks.source_transform do |path, source|
   next unless $source_transform_enabled
 
   source ||= File.read(path)
-  source.gsub(/cold/, "hot")
+  source.gsub("cold", "hot")
 end
 
 RequireHooks.source_transform do |path, source|

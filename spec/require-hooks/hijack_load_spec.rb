@@ -11,7 +11,7 @@ RequireHooks.source_transform(patterns: [File.join(__dir__, "fixtures/*.rb")]) d
 
   source ||= File.read(path)
 
-  source.gsub(/cold/, "hot")
+  source.gsub("cold", "hot")
 end
 
 RequireHooks.hijack_load(patterns: [File.join(__dir__, "fixtures/freeze.rb")]) do |path, source|
