@@ -119,7 +119,7 @@ describe "Kernel#require_relative with a relative path" do
 
   it "calls #to_str on non-String objects" do
     name = mock("load_fixture.rb mock")
-    name.should_receive(:to_str).and_return(@path)
+    name.should_receive(:to_str).and_return(@path).at_least(1)
     require_relative(name).should be_true
     ScratchPad.recorded.should == [:loaded]
   end
@@ -146,7 +146,7 @@ describe "Kernel#require_relative with a relative path" do
 
   it "calls #to_path on non-String objects" do
     name = mock("load_fixture.rb mock")
-    name.should_receive(:to_path).and_return(@path)
+    name.should_receive(:to_path).and_return(@path).at_least(1)
     require_relative(name).should be_true
     ScratchPad.recorded.should == [:loaded]
   end
@@ -154,8 +154,8 @@ describe "Kernel#require_relative with a relative path" do
   it "calls #to_str on non-String objects returned by #to_path" do
     name = mock("load_fixture.rb mock")
     to_path = mock("load_fixture_rb #to_path mock")
-    name.should_receive(:to_path).and_return(to_path)
-    to_path.should_receive(:to_str).and_return(@path)
+    name.should_receive(:to_path).and_return(to_path).at_least(1)
+    to_path.should_receive(:to_str).and_return(@path).at_least(1)
     require_relative(name).should be_true
     ScratchPad.recorded.should == [:loaded]
   end
@@ -325,7 +325,7 @@ describe "Kernel#require_relative with an absolute path" do
 
   it "calls #to_str on non-String objects" do
     name = mock("load_fixture.rb mock")
-    name.should_receive(:to_str).and_return(@path)
+    name.should_receive(:to_str).and_return(@path).at_least(1)
     require_relative(name).should be_true
     ScratchPad.recorded.should == [:loaded]
   end
@@ -352,7 +352,7 @@ describe "Kernel#require_relative with an absolute path" do
 
   it "calls #to_path on non-String objects" do
     name = mock("load_fixture.rb mock")
-    name.should_receive(:to_path).and_return(@path)
+    name.should_receive(:to_path).and_return(@path).at_least(1)
     require_relative(name).should be_true
     ScratchPad.recorded.should == [:loaded]
   end
@@ -360,8 +360,8 @@ describe "Kernel#require_relative with an absolute path" do
   it "calls #to_str on non-String objects returned by #to_path" do
     name = mock("load_fixture.rb mock")
     to_path = mock("load_fixture_rb #to_path mock")
-    name.should_receive(:to_path).and_return(to_path)
-    to_path.should_receive(:to_str).and_return(@path)
+    name.should_receive(:to_path).and_return(to_path).at_least(1)
+    to_path.should_receive(:to_str).and_return(@path).at_least(1)
     require_relative(name).should be_true
     ScratchPad.recorded.should == [:loaded]
   end

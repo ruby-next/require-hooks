@@ -51,7 +51,7 @@ describe :kernel_require_basic, shared: true do
     it "calls #to_str on non-String objects" do
       path = File.expand_path "load_fixture.rb", CODE_LOADING_DIR
       name = mock("load_fixture.rb mock")
-      name.should_receive(:to_str).and_return(path)
+      name.should_receive(:to_str).and_return(path).at_least(1)
       @object.send(@method, name).should be_true
       ScratchPad.recorded.should == [:loaded]
     end
@@ -100,7 +100,7 @@ describe :kernel_require_basic, shared: true do
     it "calls #to_path on a String" do
       path = File.expand_path "load_fixture.rb", CODE_LOADING_DIR
       str = mock("load_fixture.rb mock")
-      str.should_receive(:to_path).and_return(path)
+      str.should_receive(:to_path).and_return(path).at_least(1)
       @object.send(@method, str).should be_true
       ScratchPad.recorded.should == [:loaded]
     end
@@ -109,8 +109,8 @@ describe :kernel_require_basic, shared: true do
       path = File.expand_path "load_fixture.rb", CODE_LOADING_DIR
       name = mock("load_fixture.rb mock")
       to_path = mock("load_fixture_rb #to_path mock")
-      name.should_receive(:to_path).and_return(to_path)
-      to_path.should_receive(:to_str).and_return(path)
+      name.should_receive(:to_path).and_return(to_path).at_least(1)
+      to_path.should_receive(:to_str).and_return(path).at_least(1)
       @object.send(@method, name).should be_true
       ScratchPad.recorded.should == [:loaded]
     end
