@@ -166,7 +166,7 @@ All tests made with `eager_load=true`.
 
 Test script: `time bundle exec rails runner 'puts "done"'`.
 
-  |                                   |              |
+|                                     |              |
 |-------------------------------------|--------------|
 | baseline                            |    29s       |
 | baseline w/bootsnap                 |    12s       |
