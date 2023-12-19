@@ -34,4 +34,19 @@ describe "require-hooks: bootsnap mode" do
       end
     end
   end
+
+  it "re-raises syntax errors" do
+    cache_path = File.join(__dir__, "fixtures", "bootsnap", "tmp")
+    if File.directory?(cache_path)
+      FileUtils.rm_rf(cache_path)
+    end
+
+    run_ruby(
+      File.join(__dir__, "fixtures", "bootsnap-syntax-error.rb").to_s,
+      should_fail: true
+    ) do |_status, _output, err|
+      err.should include("SyntaxError")
+      err.should include("bootsnap-syntax-error.rb:1")
+    end
+  end
 end

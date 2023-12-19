@@ -18,7 +18,7 @@ module RequireHooks
 
         super
       rescue SyntaxError, TypeError
-        raise ::Bootsnap::CompileCache::Uncompilable
+        ::Bootsnap::CompileCache::UNCOMPILABLE
       end
     end
 

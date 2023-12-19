@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.2.2 (2023-12-19)
+
+- Fix handing uncompilable source code with Bootsnap. ([@palkan][])
+
 ## 0.2.1 (2023-12-19)
 
 - Fix constant resolution in Bootsnap error handling (`Bootsnap::CompileCache` -> `::Bootsnap::CompileCache`). ([@palkan][])
