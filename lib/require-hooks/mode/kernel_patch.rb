@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "mutex_m"
 require "pathname"
 
 module RequireHooks
