@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.2.3 (2026-01-13)
+
+- Gem metadata fixes.
+
 ## 0.2.2 (2023-12-19)
 
 - Fix handing uncompilable source code with Bootsnap. ([@palkan][])

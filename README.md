@@ -16,6 +16,7 @@ Require hooks allows you to interfere with `Kernel#require` (incl. `Kernel#requi
 
 - [Ruby Next][ruby-next]
 - [Freezolite](https://github.com/ruby-next/freezolite)
+- [Tapioca](https://github.com/Shopify/tapioca)
 
 ## Installation
 
