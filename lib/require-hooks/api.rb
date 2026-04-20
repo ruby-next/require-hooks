@@ -105,26 +105,26 @@ module RequireHooks
     end
 
     def context_for(path)
-      around_load = @@around_load.select do |patterns, exclude_patterns, _block|
+      around_load = @@around_load.filter_map do |patterns, exclude_patterns, block|
         next unless !patterns || patterns.any? { |pattern| File.fnmatch?(pattern, path) }
         next if exclude_patterns&.any? { |pattern| File.fnmatch?(pattern, path) }
 
-        true
-      end.map { |_patterns, _exclude_patterns, block| block }
+        block
+      end
 
-      source_transform = @@source_transform.select do |patterns, exclude_patterns, _block|
+      source_transform = @@source_transform.filter_map do |patterns, exclude_patterns, block|
         next unless !patterns || patterns.any? { |pattern| File.fnmatch?(pattern, path) }
         next if exclude_patterns&.any? { |pattern| File.fnmatch?(pattern, path) }
 
-        true
-      end.map { |_patterns, _exclude_patterns, block| block }
+        block
+      end
 
-      hijack_load = @@hijack_load.select do |patterns, exclude_patterns, _block|
+      hijack_load = @@hijack_load.filter_map do |patterns, exclude_patterns, block|
         next unless !patterns || patterns.any? { |pattern| File.fnmatch?(pattern, path) }
         next if exclude_patterns&.any? { |pattern| File.fnmatch?(pattern, path) }
 
-        true
-      end.map { |_patterns, _exclude_patterns, block| block }
+        block
+      end
 
       Context.new(around_load, source_transform, hijack_load)
     end

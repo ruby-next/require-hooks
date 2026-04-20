@@ -2,6 +2,8 @@
 
 module RequireHooks
   module Bootsnap
+    EMPTY_ISEQ = RubyVM::InstructionSequence.compile("").freeze
+
     module CompileCacheExt
       def input_to_storage(source, path, *)
         ctx = RequireHooks.context_for(path)
@@ -26,7 +28,13 @@ module RequireHooks
       # Around hooks must be performed every time we trigger a file load, even if
       # the file is already cached.
       def load_iseq(path)
-        RequireHooks.context_for(path).run_around_load_callbacks(path) { super }
+        RequireHooks.context_for(path).run_around_load_callbacks(path) do
+          iseq = super
+          return unless iseq
+
+          iseq.eval
+          EMPTY_ISEQ
+        end
       end
     end
   end

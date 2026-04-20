@@ -1,3 +1,5 @@
+$events << "before-file"
+
 # Ruby 3.4 introduced chilled strings that
 # pretend to be frozen (i.e., responds with true to #frozen?).
 # That will probably change in the final release though:
@@ -12,3 +14,5 @@ end
 
 str = "Hello"
 puts str + " (#{frozen?(str)})"
+
+$events << "after-file"

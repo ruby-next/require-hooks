@@ -26,6 +26,7 @@ describe "require-hooks: bootsnap mode" do
     ) do |_status, output, _err|
       output.should include("Good-bye (false)\n")
       output.should include("Good-bye (true)\n")
+      output.should include("Events: before-hook, before-file, after-file, after-hook")
 
       unless ENV["REQUIRE_HOOKS_MODE"] == "patch"
         output.should include("miss: hello.rb\n")

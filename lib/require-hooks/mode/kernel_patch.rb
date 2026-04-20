@@ -150,17 +150,9 @@ module RequireHooks
           # Check absoulute and relative paths
           return true if $LOADED_FEATURES.include?(efeature) && !LOCK.locked_feature?(efeature)
 
-          candidates = []
-
-          $LOADED_FEATURES.each do |lf|
-            candidates << lf if lf.end_with?("/#{feature}")
-          end
-
-          return false if candidates.empty?
-
           $LOAD_PATH.each do |lp|
             lp_feature = File.join(lp, feature)
-            return true if candidates.include?(lp_feature) && !LOCK.locked_feature?(lp_feature)
+            return true if $LOADED_FEATURES.include?(lp_feature) && !LOCK.locked_feature?(lp_feature)
           end
 
           false

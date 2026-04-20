@@ -11,7 +11,9 @@ RequireHooks.around_load(patterns: [File.join(__dir__, "fixtures/*.rb")], exclud
 
   $events << [:before, File.basename(path)]
 
-  block.call
+  block.call.tap do
+    $events << [:after, File.basename(path)]
+  end
 end
 
 RequireHooks.around_load(patterns: [File.join(__dir__, "fixtures/*.rb")], exclude_patterns: ["*/hi_jack.rb"]) do |path, &block|
@@ -35,12 +37,15 @@ describe "require-hooks around_load" do
     $events.clear
   end
 
-  it "invoked before and after load" do
+  it "invoked before and after load in the correct order" do
     load File.join(__dir__, "fixtures/freeze.rb")
 
     Freezy.weather.should == "cold"
 
-    $events.should == [[:before, "freeze.rb"]]
+    $events.should == [
+      [:before, "freeze.rb"], [:before_file, "freeze.rb"],
+      [:after_file, "freeze.rb"], [:after, "freeze.rb"]
+    ]
   end
 
   it "is not invoked when no matching files required" do
