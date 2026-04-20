@@ -18,6 +18,7 @@ AllCops:
     - 'spec/fixtures/**/*.rb'
     - 'spec/core/**/*.rb'
     - 'mspec/**/*'
+    - 'benchmarks/**/*'
   DisplayCopNames: true
   SuggestExtensions: false
   NewCops: disable
