@@ -17,7 +17,8 @@ Gem::Specification.new do |s|
     "documentation_uri" => "https://github.com/ruby-next/require-hooks/blob/master/README.md",
     "homepage_uri" => "https://github.com/ruby-next/require-hooks",
     "source_code_uri" => "https://github.com/ruby-next/require-hooks",
-    "funding_uri" => "https://github.com/sponsors/palkan"
+    "funding_uri" => "https://github.com/sponsors/palkan",
+    "rubygems_mfa_required" => "true"
   }
 
   s.license = "MIT"

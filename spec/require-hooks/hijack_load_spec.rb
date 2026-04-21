@@ -17,12 +17,16 @@ end
 
 RequireHooks.hijack_load(patterns: [File.join(__dir__, "fixtures/freeze.rb")]) do |path, source|
   next unless $hijack_load_enabled
-
   iseq =
     if source
       RubyVM::InstructionSequence.compile(source, path, path, 1, {frozen_string_literal: true})
     else
-      RubyVM::InstructionSequence.compile_file(path, {frozen_string_literal: true})
+      # TEMP: https://github.com/ruby/ruby/pull/16779
+      if RUBY_VERSION >= "4.1.0" # rubocop:disable Style/IfInsideElse
+        RubyVM::InstructionSequence.compile(File.read(path), path, path, 1, {frozen_string_literal: true})
+      else
+        RubyVM::InstructionSequence.compile_file(path, {frozen_string_literal: true})
+      end
     end
 
   iseq

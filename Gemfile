@@ -7,4 +7,4 @@ gem "bootsnap", platform: [:mri, :truffleruby]
 
 gemspec
 
-eval_gemfile "gemfiles/rubocop.gemfile"
+eval_gemfile "gemfiles/rubocop.gemfile" unless defined?(JRuby)

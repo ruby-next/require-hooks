@@ -5,8 +5,8 @@ require "pathname"
 module RequireHooks
   module KernelPatch
     class << self
-      def load(path)
-        ctx = RequireHooks.context_for(path)
+      def load(path, ctx: nil)
+        ctx ||= RequireHooks.context_for(path)
 
         ctx.run_around_load_callbacks(path) do
           next load_without_require_hooks(path) unless ctx.source_transform? || ctx.hijack?
@@ -230,7 +230,7 @@ module Kernel
       return false if loaded
 
       $LOADED_FEATURES << realpath
-      RequireHooks::KernelPatch.load(realpath)
+      RequireHooks::KernelPatch.load(realpath, ctx: ctx)
       true
     end
   rescue LoadError => e

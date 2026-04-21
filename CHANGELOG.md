@@ -2,6 +2,14 @@
 
 ## master
 
+## 0.3.0 (2026-04-22)
+
+- Fix the order of around hooks execution (after part) when using `#load_iseq` driven hooks.
+
+- Improve `Kernel#require` patch performance.
+
+- Reduce context object creation and use a single object when only one context defined.
+
 ## 0.2.3 (2026-01-13)
 
 - Gem metadata fixes.
