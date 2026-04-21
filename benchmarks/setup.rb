@@ -79,7 +79,7 @@ Dir.chdir(root_dir) do
   end
 
   File.write("project.rb", <<~RUBY
-    $LOAD_PATH.unshift(File.join(__dir__, "../lib"))
+    $LOAD_PATH.unshift(File.join(__dir__, "../../lib"))
     $LOAD_PATH.unshift(__dir__)
 
     if ENV["BOOTSNAP"]
@@ -92,7 +92,9 @@ Dir.chdir(root_dir) do
 
       if ENV["HOOKS"].include?("around")
         $counter = 0
-        RequireHooks.around_load(patterns: ["\#{__dir__}/*.rb"]) do |path, &block|
+        patterns = ENV["HOOKS"].include?("pattern") ?  ["\#{__dir__}/*.rb"] : nil
+
+        RequireHooks.around_load(patterns:) do |path, &block|
           block.call.tap { $counter += 1 }
         end
 

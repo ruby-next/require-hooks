@@ -33,10 +33,10 @@ Total requires: 12408
 3. Use hyperfine to run benhchmarks:
 
 ```sh
-hyperfine --warmup 2 'ruby project/project.rb' 'HOOKS=1 ruby project/project.rb' 'HOOKS=around ruby project/project.rb'
+hyperfine --warmup 2 'ruby project/project.rb' 'HOOKS=1 ruby project/project.rb' 'HOOKS=around ruby project/project.rb' 'HOOKS=around_pattern ruby project/project.rb'
 
 # with bootsnap
-hyperfine --warmup 2 'BOOTSNAP=1 ruby project/project.rb' 'BOOTSNAP=1 HOOKS=1 ruby project/project.rb' 'BOOTSNAP=1 HOOKS=around ruby project/project.rb'
+hyperfine --warmup 2 'BOOTSNAP=1 ruby project/project.rb' 'BOOTSNAP=1 HOOKS=1 ruby project/project.rb' 'BOOTSNAP=1 HOOKS=around ruby project/project.rb' 'BOOTSNAP=1 HOOKS=around_pattern ruby project/project.rb'
 
 # load_iseq vs. kernel patch
 hyperfine --warmup 2 'REQUIRE_HOOKS_MODE=load_iseq HOOKS=around ruby project/project.rb' 'REQUIRE_HOOKS_MODE=patch HOOKS=around ruby project/project.rb'
