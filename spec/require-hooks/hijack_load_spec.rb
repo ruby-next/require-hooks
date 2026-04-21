@@ -2,6 +2,7 @@
 
 require_relative "../spec_helper"
 
+$events = []
 $hijack_load_enabled = false
 $source_transform_enabled = false
 

@@ -7,6 +7,7 @@ module RequireHooks
     module CompileCacheExt
       def input_to_storage(source, path, *)
         ctx = RequireHooks.context_for(path)
+        return super if ctx.empty?
 
         new_contents = ctx.perform_source_transform(path)
         hijacked = ctx.try_hijack_load(path, new_contents)
@@ -28,7 +29,11 @@ module RequireHooks
       # Around hooks must be performed every time we trigger a file load, even if
       # the file is already cached.
       def load_iseq(path)
-        RequireHooks.context_for(path).run_around_load_callbacks(path) do
+        ctx = RequireHooks.context_for(path)
+        # Early-return for non-trackable paths
+        return super if ctx.empty?
+
+        ctx.run_around_load_callbacks(path) do
           iseq = super
           return unless iseq
 

@@ -7,6 +7,9 @@ module RequireHooks
     def load_iseq(path)
       ctx = RequireHooks.context_for(path)
 
+      # Early-return for non-trackable paths
+      return if ctx.empty?
+
       ctx.run_around_load_callbacks(path) do
         iseq =
           if ctx.source_transform? || ctx.hijack?

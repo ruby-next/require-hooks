@@ -49,7 +49,6 @@ describe "require-hooks around_load" do
   end
 
   it "is not invoked when no matching files required" do
-    $source_transform_enabled = false
     load File.join(__dir__, "fixtures/hi_jack.rb")
 
     $events.should == []

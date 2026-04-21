@@ -1,19 +1,34 @@
 # frozen_string_literal: true
 
 module RequireHooks
-  @@around_load = []
-  @@source_transform = []
-  @@hijack_load = []
-
   class Context
-    def initialize(around_load, source_transform, hijack_load)
-      @around_load = around_load
-      @source_transform = source_transform
-      @hijack_load = hijack_load
+    attr_reader :around_load, :source_transform, :hijack_load,
+      :patterns, :exclude_patterns
+
+    def initialize(patterns: nil, exclude_patterns: nil)
+      @patterns = patterns.freeze
+      @exclude_patterns = exclude_patterns.freeze
+
+      @around_load = []
+      @source_transform = []
+      @hijack_load = []
+
+      @empty = nil
+    end
+
+    def to_key
+      [patterns, exclude_patterns]
+    end
+
+    def match?(path)
+      return false unless !patterns || patterns.any? { |pattern| File.fnmatch?(pattern, path) }
+      return false if exclude_patterns&.any? { |pattern| File.fnmatch?(pattern, path) }
+      true
     end
 
     def empty?
-      @around_load.empty? && @source_transform.empty? && @hijack_load.empty?
+      return @empty unless @empty.nil?
+      @empty = @around_load.empty? && @source_transform.empty? && @hijack_load.empty?
     end
 
     def source_transform?
@@ -57,6 +72,10 @@ module RequireHooks
     end
   end
 
+  @@default_context = Context.new
+  @@noop_context = Context.new
+  @@contexts = {}
+
   class << self
     attr_accessor :print_warnings
 
@@ -69,7 +88,13 @@ module RequireHooks
     #      block.call.tap { puts "Loaded #{path}" }
     #    end
     def around_load(patterns: nil, exclude_patterns: nil, &block)
-      @@around_load << [patterns, exclude_patterns, block]
+      @@default_context = nil
+      ctx = Context.new(patterns: patterns, exclude_patterns: exclude_patterns)
+
+      @@contexts[ctx.to_key] ||= ctx
+      @@contexts[ctx.to_key].around_load << block
+
+      @@default_context = @@contexts.values.first if @@contexts.size == 1
     end
 
     # Define hooks to perform source-to-source transformations.
@@ -83,7 +108,13 @@ module RequireHooks
     #      "# frozen_string_literal: true\n#{source}"
     #    end
     def source_transform(patterns: nil, exclude_patterns: nil, &block)
-      @@source_transform << [patterns, exclude_patterns, block]
+      @@default_context = nil
+      ctx = Context.new(patterns: patterns, exclude_patterns: exclude_patterns)
+
+      @@contexts[ctx.to_key] ||= ctx
+      @@contexts[ctx.to_key].source_transform << block
+
+      @@default_context = @@contexts.values.first if @@contexts.size == 1
     end
 
     # This hook should be used to manually compile byte code to be loaded by the VM.
@@ -101,32 +132,35 @@ module RequireHooks
     #     end
     #   end
     def hijack_load(patterns: nil, exclude_patterns: nil, &block)
-      @@hijack_load << [patterns, exclude_patterns, block]
+      @@default_context = nil
+      ctx = Context.new(patterns: patterns, exclude_patterns: exclude_patterns)
+
+      @@contexts[ctx.to_key] ||= ctx
+      @@contexts[ctx.to_key].hijack_load << block
+
+      @@default_context = @@contexts.values.first if @@contexts.size == 1
     end
 
     def context_for(path)
-      around_load = @@around_load.filter_map do |patterns, exclude_patterns, block|
-        next unless !patterns || patterns.any? { |pattern| File.fnmatch?(pattern, path) }
-        next if exclude_patterns&.any? { |pattern| File.fnmatch?(pattern, path) }
+      # Fast-track in case we have just a single context defined
+      if @@default_context
+        return @@noop_context unless @@default_context.match?(path)
 
-        block
+        return @@default_context
       end
 
-      source_transform = @@source_transform.filter_map do |patterns, exclude_patterns, block|
-        next unless !patterns || patterns.any? { |pattern| File.fnmatch?(pattern, path) }
-        next if exclude_patterns&.any? { |pattern| File.fnmatch?(pattern, path) }
+      matching = @@contexts.values.filter { |ctx| ctx.match?(path) }
 
-        block
+      return matching[0] || @@noop_context if matching.size < 2
+
+      ctx = Context.new
+      matching.each do |mctx|
+        ctx.around_load.concat(mctx.around_load)
+        ctx.source_transform.concat(mctx.source_transform)
+        ctx.hijack_load.concat(mctx.hijack_load)
       end
 
-      hijack_load = @@hijack_load.filter_map do |patterns, exclude_patterns, block|
-        next unless !patterns || patterns.any? { |pattern| File.fnmatch?(pattern, path) }
-        next if exclude_patterns&.any? { |pattern| File.fnmatch?(pattern, path) }
-
-        block
-      end
-
-      Context.new(around_load, source_transform, hijack_load)
+      ctx
     end
   end
 end
