@@ -149,7 +149,7 @@ module RequireHooks
         return @@default_context
       end
 
-      matching = @@contexts.values.filter { |ctx| ctx.match?(path) }
+      matching = @@contexts.values.select { |ctx| ctx.match?(path) }
 
       return matching[0] || @@noop_context if matching.size < 2
 
