@@ -140,24 +140,6 @@ module RequireHooks
           path
         end
 
-        # Based on https://github.com/ruby/ruby/blob/b588fd552390c55809719100d803c36bc7430f2f/load.c#L403-L415
-        def feature_loaded?(feature)
-          return true if $LOADED_FEATURES.include?(feature) && !LOCK.locked_feature?(feature)
-
-          feature = Pathname.new(feature).cleanpath.to_s
-          efeature = File.expand_path(feature)
-
-          # Check absoulute and relative paths
-          return true if $LOADED_FEATURES.include?(efeature) && !LOCK.locked_feature?(efeature)
-
-          $LOAD_PATH.each do |lp|
-            lp_feature = File.join(lp, feature)
-            return true if $LOADED_FEATURES.include?(lp_feature) && !LOCK.locked_feature?(lp_feature)
-          end
-
-          false
-        end
-
         private
 
         def lookup_feature_path(path, implitic_ext: true)
@@ -242,7 +224,7 @@ module Kernel
 
     return require_without_require_hooks(path) if ctx.empty?
 
-    return false if RequireHooks::KernelPatch::Features.feature_loaded?(feature)
+    return false if $LOADED_FEATURES.include?(realpath)
 
     RequireHooks::KernelPatch::Features::LOCK.lock_feature(feature) do |loaded|
       return false if loaded
