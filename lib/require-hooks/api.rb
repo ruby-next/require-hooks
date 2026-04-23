@@ -165,6 +165,10 @@ module RequireHooks
       Kernel.eval("\n" * (contents || File.read(path)).lines.size, TOPLEVEL_BINDING, path, 1) # rubocop:disable Style/EvalWithLocation,Security/Eval
     end
 
+    def contexts
+      @@contexts
+    end
+
     private
 
     def register_hook(type, block, patterns: nil, exclude_patterns: nil)

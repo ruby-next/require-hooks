@@ -9,6 +9,8 @@ describe "require-hooks: bootsnap mode" do
   next skip unless RUBY_VERSION >= "2.3.0"
 
   before do
+    @bootsnap_logs_available = ENV["REQUIRE_HOOKS_MODE"] != "patch" && RUBY_VERSION >= "2.6.0"
+
     cache_path = File.join(__dir__, "fixtures", "tmp")
     if File.directory?(cache_path)
       FileUtils.rm_rf(cache_path)
@@ -16,11 +18,6 @@ describe "require-hooks: bootsnap mode" do
   end
 
   it "performs transformations within Bootsnap (thus caching the results)" do
-    cache_path = File.join(__dir__, "fixtures", "bootsnap", "tmp")
-    if File.directory?(cache_path)
-      FileUtils.rm_rf(cache_path)
-    end
-
     run_ruby(
       File.join(__dir__, "fixtures", "bootsnap.rb").to_s
     ) do |_status, output, _err|
@@ -28,20 +25,18 @@ describe "require-hooks: bootsnap mode" do
       output.should include("Good-bye (true)\n")
       output.should include("Events: before-hook, before-file, after-file, after-hook")
 
-      unless ENV["REQUIRE_HOOKS_MODE"] == "patch"
+      # Only when the Bootsnap mode is used
+      if @bootsnap_logs_available
         output.should include("miss: hello.rb\n")
         misses = output.scan(/miss: (.*)$/).flatten
-        misses.size.should == 1
+        # Since we use different folders for different hook configuration,
+        # we expect to see miss, not stale
+        misses.size.should == 2
       end
     end
   end
 
   it "re-raises syntax errors" do
-    cache_path = File.join(__dir__, "fixtures", "bootsnap", "tmp")
-    if File.directory?(cache_path)
-      FileUtils.rm_rf(cache_path)
-    end
-
     run_ruby(
       File.join(__dir__, "fixtures", "bootsnap-syntax-error.rb").to_s,
       should_fail: true
@@ -62,6 +57,144 @@ describe "require-hooks: bootsnap mode" do
       ) do |_status, output, _err|
         output.should include("./hello.rb: [")
         output.should include("./coverable.rb: [1, 1, 1, nil, nil, nil, 1, 1, nil, 0, nil]\n")
+      end
+    end
+  end
+
+  context "cache versioning" do
+    it "no hooks -> hooks -> different hooks" do
+      # Run first without require hooks — loads the original file
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s,
+        env: {"HOOKS" => "false"}
+      ) do |_status, output, _err|
+        output.should include("Hello (false)\n")
+
+        if @bootsnap_logs_available
+          output.should include("miss: hello.rb\n")
+        end
+      end
+
+      # Now, run with hooks enabled — must invalidate
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s,
+        env: {"HOOKS" => "true"}
+      ) do |_status, output, _err|
+        output.should include("Good-bye (false)\n")
+
+        if @bootsnap_logs_available
+          # !!! miss, not stale
+          output.should include("miss: hello.rb\n")
+        end
+      end
+
+      # Run again to make sure it's cached
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s,
+        env: {"HOOKS" => "true"}
+      ) do |_status, output, _err|
+        output.should include("Good-bye (false)\n")
+
+        if @bootsnap_logs_available
+          output.should include("hit: hello.rb\n")
+        end
+      end
+
+      # Run w/ different hooks
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s,
+        env: {"HOOKS" => "double-transform"}
+      ) do |_status, output, _err|
+        output.should include("Ciao (false)\n")
+
+        if @bootsnap_logs_available
+          # !!! miss, not stale
+          output.should include("miss: hello.rb\n")
+        end
+      end
+    end
+
+    it "hooks -> no hooks" do
+      # Run first with require hooks
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s,
+        env: {"HOOKS" => "true"}
+      ) do |_status, output, _err|
+        output.should include("Good-bye (false)\n")
+
+        if @bootsnap_logs_available
+          output.should include("miss: hello.rb\n")
+        end
+      end
+
+      # Now, run without hooks and check that it loads the original file
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s,
+        env: {"HOOKS" => "false"}
+      ) do |_status, output, _err|
+        output.should include("Hello (false)\n")
+
+        if @bootsnap_logs_available
+          # !!! miss, not stale
+          output.should include("miss: hello.rb\n")
+        end
+      end
+    end
+
+    it "hooks -> different hooks (same shape)" do
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s
+      ) do |_status, output, _err|
+        output.should include("Good-bye (false)\n")
+        if @bootsnap_logs_available
+          output.should include("miss: hello.rb\n")
+          output.should include("miss: goodbye.rb\n")
+        end
+      end
+
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s
+      ) do |_status, output, _err|
+        output.should include("Good-bye (false)\n")
+        if @bootsnap_logs_available
+          output.should include("hit: hello.rb\n")
+          output.should include("hit: goodbye.rb\n")
+        end
+      end
+
+      # Run w/ different hooks if the same shape
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache-copy.rb").to_s
+      ) do |_status, output, _err|
+        output.should include("Hallo (false)\n")
+
+        if @bootsnap_logs_available
+          # !!! miss, not stale
+          output.should include("miss: hello.rb\n")
+          output.should include("hit: goodbye.rb\n")
+        end
+      end
+    end
+
+    it "unhooked files caching is not affected" do
+      run_ruby(
+        %(#{File.join(__dir__, "fixtures", "bootsnap-cache.rb")} goodbye.rb)
+      ) do |_status, output, _err|
+        if @bootsnap_logs_available
+          output.should include("miss: api.rb\n")
+          output.should include("miss: goodbye.rb\n")
+        end
+      end
+
+      # Verify that loading a non-hookable file is cached
+      run_ruby(
+        %(#{File.join(__dir__, "fixtures", "bootsnap-cache.rb")} goodbye.rb --no-hooks)
+      ) do |_status, output, _err|
+        if @bootsnap_logs_available
+          output.should_not include("miss: api.rb\n")
+          # !!! miss, not stale
+          output.should include("hit: goodbye.rb\n")
+        end
       end
     end
   end

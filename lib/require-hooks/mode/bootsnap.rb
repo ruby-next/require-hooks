@@ -51,15 +51,27 @@ module RequireHooks
     end
 
     module LoadIseqExt
+      class << self
+        attr_accessor :orig_cache_dir
+      end
+
       # Around hooks must be performed every time we trigger a file load, even if
       # the file is already cached.
       def load_iseq(path)
         ctx = RequireHooks.context_for(path)
         # Early-return for non-trackable paths
-        return super if ctx.empty?
+        if ctx.empty?
+          ::Bootsnap::CompileCache::ISeq.cache_dir = LoadIseqExt.orig_cache_dir if LoadIseqExt.orig_cache_dir
+          return super
+        end
+
+        LoadIseqExt.orig_cache_dir ||= ::Bootsnap::CompileCache::ISeq.cache_dir
+        ::Bootsnap::CompileCache::ISeq.cache_dir = File.join(LoadIseqExt.orig_cache_dir, RequireHooks::Bootsnap.version_hash)
 
         ctx.run_around_load_callbacks(path) do
           iseq = super
+
+          ::Bootsnap::CompileCache::ISeq.cache_dir = LoadIseqExt.orig_cache_dir
 
           # Bootsnap returns nil when the coverage is on,
           # we fallback to our custom #compile_with_coverage
@@ -71,8 +83,28 @@ module RequireHooks
 
           iseq.eval
           EMPTY_ISEQ
+        ensure
+          ::Bootsnap::CompileCache::ISeq.cache_dir = LoadIseqExt.orig_cache_dir
         end
       end
+    end
+
+    class << self
+      def version_hash
+        @version_key ||= RequireHooks.contexts.values.map(&:to_cache_key).join("-")
+      end
+
+      attr_writer :version_hash
+    end
+  end
+
+  class Context
+    def to_cache_key
+      Zlib.crc32(
+        (around_load + source_transform + hijack_load).map do |pr|
+          RubyVM::InstructionSequence.disasm(pr)
+        end.join("\n")
+      ).to_s
     end
   end
 end
