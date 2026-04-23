@@ -50,4 +50,19 @@ describe "require-hooks: bootsnap mode" do
       err.should include("bootsnap-syntax-error.rb:1")
     end
   end
+
+  context "coverage" do
+    # Eval coverage is only avaiable from 3.2
+    next unless RUBY_VERSION >= "3.2.0"
+
+    it "does not break coverage tracking" do
+      run_ruby(
+        File.join(__dir__, "fixtures", "coverage.rb").to_s,
+        env: {"BOOTSNAP" => "1"}
+      ) do |_status, output, _err|
+        output.should include("./hello.rb: [")
+        output.should include("./coverable.rb: [1, 1, 1, nil, nil, nil, 1]\n")
+      end
+    end
+  end
 end

@@ -35,7 +35,29 @@ module RequireHooks
 
         ctx.run_around_load_callbacks(path) do
           iseq = super
-          return unless iseq
+          # Bootsnap returns nil when the coverage is on,
+          unless iseq
+            next unless defined?(Coverage) && Coverage.running?
+
+            iseq =
+              if ctx.source_transform? || ctx.hijack?
+                new_contents = ctx.perform_source_transform(path)
+
+                RequireHooks.setup_path_coverage(path, new_contents)
+
+                hijacked = ctx.try_hijack_load(path, new_contents)
+
+                if hijacked
+                  raise TypeError, "Unsupported bytecode format for #{path}: #{hijack.class}" unless hijacked.is_a?(::RubyVM::InstructionSequence)
+                  hijacked
+                elsif new_contents
+                  RubyVM::InstructionSequence.compile(new_contents, path, path, 1)
+                end
+              else
+                RequireHooks.setup_path_coverage(path)
+                RubyVM::InstructionSequence.compile_file(path)
+              end
+          end
 
           iseq.eval
           EMPTY_ISEQ

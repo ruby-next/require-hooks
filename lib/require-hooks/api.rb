@@ -14,6 +14,7 @@ module RequireHooks
       @hijack_load = []
 
       @empty = nil
+      @readonly = nil
     end
 
     def to_key
@@ -29,6 +30,12 @@ module RequireHooks
     def empty?
       return @empty unless @empty.nil?
       @empty = @around_load.empty? && @source_transform.empty? && @hijack_load.empty?
+    end
+
+    def readonly?
+      return @readonly unless @readonly.nil?
+
+      @readonly = @source_transform.empty? && @hijack_load.empty?
     end
 
     def source_transform?
@@ -161,6 +168,26 @@ module RequireHooks
       end
 
       ctx
+    end
+
+    # Hack to enable coverage for hooked files.
+    # Requires eval coverage to be on.
+    def setup_path_coverage(path, contents = nil)
+      return unless defined?(Coverage) && Coverage.running?
+
+      return unless eval_coverage_enabled?
+
+      Kernel.eval("\n" * (contents || File.read(path)).lines.size, TOPLEVEL_BINDING, path, 1) # rubocop:disable Style/EvalWithLocation,Security/Eval
+    end
+
+    private
+
+    def eval_coverage_enabled?
+      return @eval_coverage_enabled if defined?(@eval_coverage_enabled)
+      probe_path = File.join(__dir__, "coverage_probe.rb")
+      Kernel.eval("proc { |val| val }", TOPLEVEL_BINDING, probe_path, 1) # rubocop:disable Style/EvalWithLocation
+
+      @eval_coverage_enabled = Coverage.peek_result.key?(probe_path)
     end
   end
 end

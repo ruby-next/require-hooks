@@ -12,11 +12,18 @@ module RequireHooks
           next load_without_require_hooks(path) unless ctx.source_transform? || ctx.hijack?
 
           new_contents = ctx.perform_source_transform(path)
+
           hijacked = ctx.try_hijack_load(path, new_contents)
 
-          return try_evaluate(path, hijacked) if hijacked
+          if hijacked
+            RequireHooks.setup_path_coverage(path, new_contents)
+
+            return try_evaluate(path, hijacked)
+          end
 
           if new_contents
+            RequireHooks.setup_path_coverage(path, new_contents)
+
             evaluate(new_contents, path)
             true
           else

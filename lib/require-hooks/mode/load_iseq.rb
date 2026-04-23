@@ -14,6 +14,9 @@ module RequireHooks
         iseq =
           if ctx.source_transform? || ctx.hijack?
             new_contents = ctx.perform_source_transform(path)
+
+            RequireHooks.setup_path_coverage(path, new_contents)
+
             hijacked = ctx.try_hijack_load(path, new_contents)
 
             if hijacked
@@ -24,7 +27,10 @@ module RequireHooks
             end
           end
 
+        RequireHooks.setup_path_coverage(path)
+
         iseq ||= (defined?(super) ? super : RubyVM::InstructionSequence.compile_file(path))
+
         iseq.eval
         EMPTY_ISEQ
       end
