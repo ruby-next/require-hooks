@@ -27,6 +27,13 @@ RequireHooks.around_load(patterns: ["*/fixtures/coverable.rb"]) do |path, &block
   block.call.tap { $events << "after-hook" }
 end
 
+if ENV["TRANSFORM"] == "true"
+  RequireHooks.source_transform(patterns: ["*/fixtures/*.rb"]) do |path, source|
+    source ||= File.read(path)
+    source.gsub("cover up", "cover down")
+  end
+end
+
 load File.join(__dir__, "hello.rb")
 load File.join(__dir__, "coverable.rb")
 

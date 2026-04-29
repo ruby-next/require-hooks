@@ -61,7 +61,7 @@ describe "require-hooks: bootsnap mode" do
         env: {"BOOTSNAP" => "1"}
       ) do |_status, output, _err|
         output.should include("./hello.rb: [")
-        output.should include("./coverable.rb: [1, 1, 1, nil, nil, nil, 1]\n")
+        output.should include("./coverable.rb: [1, 1, 1, nil, nil, nil, 1, 1, nil, 0, nil]\n")
       end
     end
   end

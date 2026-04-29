@@ -16,14 +16,10 @@ module RequireHooks
           hijacked = ctx.try_hijack_load(path, new_contents)
 
           if hijacked
-            RequireHooks.setup_path_coverage(path, new_contents)
-
             return try_evaluate(path, hijacked)
           end
 
           if new_contents
-            RequireHooks.setup_path_coverage(path, new_contents)
-
             evaluate(new_contents, path)
             true
           else
@@ -36,6 +32,7 @@ module RequireHooks
 
       def try_evaluate(path, bytecode)
         if defined?(::RubyVM::InstructionSequence) && bytecode.is_a?(::RubyVM::InstructionSequence)
+          RequireHooks.setup_path_coverage(path)
           bytecode.eval
         else
           raise TypeError, "Unknown bytecode format for #{path}: #{bytecode.inspect}"
@@ -56,6 +53,8 @@ module RequireHooks
         end
       else
         def evaluate(code, filepath)
+          RequireHooks.setup_path_coverage(filepath, code)
+
           # This is workaround to solve the "leaking refinements" problem in MRI
           RubyVM::InstructionSequence.compile(code, filepath).tap do |iseq|
             iseq.eval

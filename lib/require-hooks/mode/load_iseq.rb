@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "require-hooks/iseq"
+
 module RequireHooks
   EMPTY_ISEQ = RubyVM::InstructionSequence.compile("").freeze
 
@@ -11,25 +13,7 @@ module RequireHooks
       return if ctx.empty?
 
       ctx.run_around_load_callbacks(path) do
-        iseq =
-          if ctx.source_transform? || ctx.hijack?
-            new_contents = ctx.perform_source_transform(path)
-
-            RequireHooks.setup_path_coverage(path, new_contents)
-
-            hijacked = ctx.try_hijack_load(path, new_contents)
-
-            if hijacked
-              raise TypeError, "Unsupported bytecode format for #{path}: #{hijack.class}" unless hijacked.is_a?(::RubyVM::InstructionSequence)
-              hijacked
-            elsif new_contents
-              RubyVM::InstructionSequence.compile(new_contents, path, path, 1)
-            end
-          end
-
-        RequireHooks.setup_path_coverage(path)
-
-        iseq ||= (defined?(super) ? super : RubyVM::InstructionSequence.compile_file(path))
+        iseq = RequireHooks::Iseq.compile_with_coverage(ctx, path) { defined?(super) && super }
 
         iseq.eval
         EMPTY_ISEQ

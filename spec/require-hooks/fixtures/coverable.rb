@@ -4,4 +4,8 @@ class Coverable
   end
 end
 
-Coverable.call
+if Coverable.call.include?("up")
+  puts "UP!"
+else
+  puts "DOWN!"
+end

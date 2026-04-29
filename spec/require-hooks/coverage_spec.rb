@@ -13,8 +13,22 @@ describe "require-hooks vs coverage" do
     run_ruby(
       File.join(__dir__, "fixtures", "coverage.rb").to_s
     ) do |_status, output, _err|
+      output.should include("UP!")
+
       output.should include("./hello.rb: [")
-      output.should include("./coverable.rb: [1, 1, 1, nil, nil, nil, 1]\n")
+      output.should include("./coverable.rb: [1, 1, 1, nil, nil, nil, 1, 1, nil, 0, nil]\n")
+    end
+  end
+
+  it "handles source transformation" do
+    run_ruby(
+      File.join(__dir__, "fixtures", "coverage.rb").to_s,
+      env: {"TRANSFORM" => "true"}
+    ) do |_status, output, _err|
+      output.should include("DOWN!")
+
+      output.should include("./hello.rb: [")
+      output.should include("./coverable.rb: [1, 1, 1, nil, nil, nil, 1, 0, nil, 1, nil]\n")
     end
   end
 end
