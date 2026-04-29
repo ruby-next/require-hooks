@@ -2,6 +2,14 @@
 
 ## master
 
+## 0.4.0 (2026-04-29)
+
+- Improved Bootsnap cache invalidation logic on hooks configuration changes.
+
+- Latest Bootsnap compatibility
+
+- Coverage compatibility (w/ some limitations)
+
 ## 0.3.0 (2026-04-22)
 
 - Fix the order of around hooks execution (after part) when using `#load_iseq` driven hooks.

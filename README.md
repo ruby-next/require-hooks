@@ -9,6 +9,8 @@ Require Hooks is a library providing universal interface for injecting custom co
 
 Require hooks allows you to interfere with `Kernel#require` (incl. `Kernel#require_relative`) and `Kernel#load`.
 
+> Check the ["Require Hooks: Filling the Gap in Ruby's Extensibility"](https://evilmartians.com/events/require-hooks-rubykaigi) talk from RubyKaigi 2026 to learn more.
+
 <a href="https://evilmartians.com/">
 <img src="https://evilmartians.com/badges/sponsored-by-evil-martians.svg" alt="Sponsored by Evil Martians" width="236" height="54"></a>
 
@@ -126,6 +128,7 @@ Thus, if you introduce new source transformers or hijackers, you must invalidate
 
 ## Limitations
 
+- Coverage tracking is only supported if `eval` coverage tracking is enabled (`Coverage.start(eval: true, ...)` or `Simplecov.start { enable_coverage_for_eval; ... }`). Currently requires **Ruby 3.4+**.
 - `Kernel#load` with a wrap argument (e.g., `load "some_path", true` or `load "some_path", MyModule)`) is not supported (fallbacked to the original implementation). The biggest challenge here is to support constants nesting.
 - Some very edgy symlinking scenarios are not supported (unlikely to affect real-world projects).
 
@@ -175,9 +178,9 @@ Test script: `time bundle exec rails runner 'puts "done"'`.
 | rhooks (patch)                      |    **8m**    |
 | rhooks (bootsnap)                   |    12s       |
 
-You can see that requiring tons of files with Require Hooks in patch mode is very slow for now. Why? Mostly because we MUST check `$LOADED_FEATURES` for the presence of the file we want to load and currently we do this via `$LOADED_FEATURES.include?(path)` call, which becomes very slow when `$LOADED_FEATURES` is huge. Thus, we recommend activating Require Hooks after loading all the dependencies and limiting the scope of affected files (via the `patterns` option) on non-MRI platforms to avoid this overhead.
+You can see that requiring tons of files with Require Hooks in patch mode is very slow for now. Why? Manipulating the `$LOADED_FEATURES` index from Ruby triggers costly invalidation at the VM side when a regular `#require` occurs. We recommend activating Require Hooks after loading all the dependencies and limiting the scope of affected files (via the `patterns` option) on non-MRI platforms to avoid this overhead.
 
-**NOTE:** Why Ruby's internal implementations is fast despite from doing the same checks? It uses an internal hash table to keep track of the loaded features (`vm->loaded_features_realpaths`), not an array. Unfortunately, it's not accessible from Ruby.
+**NOTE:** This could be improved in the future if we get [optimized API](https://github.com/palkan/ruby/pull/1) for managing `$LOADED_FEATURES` from Ruby code.
 
 Here are the numbers for the same project with scoped hooks (only some folders) activated after `Bundler.require(*)`:
 
