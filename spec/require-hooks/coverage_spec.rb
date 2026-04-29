@@ -21,6 +21,10 @@ describe "require-hooks vs coverage" do
   end
 
   it "handles source transformation" do
+    # The workaround doesn't work in earlier versions,
+    # so only around hooks are supported
+    next skip unless RUBY_VERSION >= "3.4.0"
+
     run_ruby(
       File.join(__dir__, "fixtures", "coverage.rb").to_s,
       env: {"TRANSFORM" => "true"}

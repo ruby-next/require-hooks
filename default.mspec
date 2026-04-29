@@ -4,7 +4,7 @@ lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 begin
-  require "debug"
+  require "debug" unless ENV["CI"]
 rescue LoadError, NameError
 end
 
