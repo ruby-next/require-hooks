@@ -15,4 +15,8 @@ end
 str = "Hello"
 puts str + " (#{frozen?(str)})"
 
+# Load a file that out of the hooks scope to ensure that
+# its cache is not affected by require-hooks
+load File.join(__dir__, "goodbye.rb")
+
 $events << "after-file"
