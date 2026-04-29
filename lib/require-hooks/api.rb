@@ -156,6 +156,7 @@ module RequireHooks
 
     # Hack to enable coverage for hooked files.
     # Requires eval coverage to be on.
+    # See https://bugs.ruby-lang.org/issues/22018 (https://github.com/ruby/ruby/pull/16805)
     def setup_path_coverage(path, contents = nil)
       return unless defined?(Coverage) && Coverage.running?
 
