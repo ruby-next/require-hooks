@@ -233,22 +233,24 @@ module Kernel
 
     return false if $LOADED_FEATURES.include?(realpath)
 
-    RequireHooks::KernelPatch::Features::LOCK.lock_feature(feature) do |loaded|
-      return false if loaded
+    begin
+      RequireHooks::KernelPatch::Features::LOCK.lock_feature(feature) do |loaded|
+        return false if loaded
 
-      $LOADED_FEATURES << realpath
-      RequireHooks::KernelPatch.load(realpath, ctx: ctx)
-      true
+        $LOADED_FEATURES << realpath
+        RequireHooks::KernelPatch.load(realpath, ctx: ctx)
+        true
+      end
+    rescue LoadError => e
+      $LOADED_FEATURES.delete(realpath) if realpath
+      warn "RequireHooks failed to require '#{path}' from '#{realpath}': #{e.message}" if RequireHooks.print_warnings
+      require_without_require_hooks(path)
+    rescue Errno::ENOENT, Errno::EACCES
+      raise LoadError, "cannot load such file -- #{path}"
+    rescue
+      $LOADED_FEATURES.delete(realpath) if realpath
+      raise
     end
-  rescue LoadError => e
-    $LOADED_FEATURES.delete(realpath) if realpath
-    warn "RequireHooks failed to require '#{path}': #{e.message}" if RequireHooks.print_warnings
-    require_without_require_hooks(path)
-  rescue Errno::ENOENT, Errno::EACCES
-    raise LoadError, "cannot load such file -- #{path}"
-  rescue
-    $LOADED_FEATURES.delete(realpath) if realpath
-    raise
   end
 
   alias_method :require_relative_without_require_hooks, :require_relative

@@ -93,8 +93,9 @@ Dir.chdir(root_dir) do
       if ENV["HOOKS"].include?("around")
         $counter = 0
         patterns = ENV["HOOKS"].include?("pattern") ?  ["\#{__dir__}/*.rb"] : nil
+        exclude_patterns = ENV["HOOKS"].include?("exclude-pattern") ?  ["\#{__dir__}/*/b.rb"] : nil
 
-        RequireHooks.around_load(patterns:) do |path, &block|
+        RequireHooks.around_load(patterns:, exclude_patterns:) do |path, &block|
           block.call.tap { $counter += 1 }
         end
 

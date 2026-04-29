@@ -77,6 +77,12 @@ module RequireHooks
       end
       nil
     end
+
+    def merge!(another_ctx)
+      around_load.concat(another_ctx.around_load)
+      source_transform.concat(another_ctx.source_transform)
+      hijack_load.concat(another_ctx.hijack_load)
+    end
   end
 
   @@default_context = Context.new
@@ -95,13 +101,7 @@ module RequireHooks
     #      block.call.tap { puts "Loaded #{path}" }
     #    end
     def around_load(patterns: nil, exclude_patterns: nil, &block)
-      @@default_context = nil
-      ctx = Context.new(patterns: patterns, exclude_patterns: exclude_patterns)
-
-      @@contexts[ctx.to_key] ||= ctx
-      @@contexts[ctx.to_key].around_load << block
-
-      @@default_context = @@contexts.values.first if @@contexts.size == 1
+      register_hook(:around_load, block, patterns: patterns, exclude_patterns: exclude_patterns)
     end
 
     # Define hooks to perform source-to-source transformations.
@@ -115,13 +115,7 @@ module RequireHooks
     #      "# frozen_string_literal: true\n#{source}"
     #    end
     def source_transform(patterns: nil, exclude_patterns: nil, &block)
-      @@default_context = nil
-      ctx = Context.new(patterns: patterns, exclude_patterns: exclude_patterns)
-
-      @@contexts[ctx.to_key] ||= ctx
-      @@contexts[ctx.to_key].source_transform << block
-
-      @@default_context = @@contexts.values.first if @@contexts.size == 1
+      register_hook(:source_transform, block, patterns: patterns, exclude_patterns: exclude_patterns)
     end
 
     # This hook should be used to manually compile byte code to be loaded by the VM.
@@ -139,21 +133,15 @@ module RequireHooks
     #     end
     #   end
     def hijack_load(patterns: nil, exclude_patterns: nil, &block)
-      @@default_context = nil
-      ctx = Context.new(patterns: patterns, exclude_patterns: exclude_patterns)
-
-      @@contexts[ctx.to_key] ||= ctx
-      @@contexts[ctx.to_key].hijack_load << block
-
-      @@default_context = @@contexts.values.first if @@contexts.size == 1
+      register_hook(:hijack_load, block, patterns: patterns, exclude_patterns: exclude_patterns)
     end
 
     def context_for(path)
-      # Fast-track in case we have just a single context defined
+      # Fast-track in case we have just a single non-global context defined
       if @@default_context
-        return @@noop_context unless @@default_context.match?(path)
+        return @@default_context if @@default_context.match?(path)
 
-        return @@default_context
+        return @@noop_context
       end
 
       matching = @@contexts.values.select { |ctx| ctx.match?(path) }
@@ -161,11 +149,7 @@ module RequireHooks
       return matching[0] || @@noop_context if matching.size < 2
 
       ctx = Context.new
-      matching.each do |mctx|
-        ctx.around_load.concat(mctx.around_load)
-        ctx.source_transform.concat(mctx.source_transform)
-        ctx.hijack_load.concat(mctx.hijack_load)
-      end
+      matching.each { |mctx| ctx.merge!(mctx) }
 
       ctx
     end
@@ -181,6 +165,16 @@ module RequireHooks
     end
 
     private
+
+    def register_hook(type, block, patterns: nil, exclude_patterns: nil)
+      @@default_context = nil
+      ctx = Context.new(patterns: patterns, exclude_patterns: exclude_patterns)
+
+      @@contexts[ctx.to_key] ||= ctx
+      @@contexts[ctx.to_key].public_send(type) << block
+
+      @@default_context = @@contexts.values.first if @@contexts.size == 1
+    end
 
     def eval_coverage_enabled?
       return @eval_coverage_enabled if defined?(@eval_coverage_enabled)
