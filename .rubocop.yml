@@ -22,7 +22,7 @@ AllCops:
   DisplayCopNames: true
   SuggestExtensions: false
   NewCops: disable
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 2.3
 
 Style/FrozenStringLiteralComment:
   Enabled: true

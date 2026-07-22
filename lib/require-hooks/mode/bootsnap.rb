@@ -69,22 +69,24 @@ module RequireHooks
         ::Bootsnap::CompileCache::ISeq.cache_dir = File.join(LoadIseqExt.orig_cache_dir, RequireHooks::Bootsnap.version_hash)
 
         ctx.run_around_load_callbacks(path) do
-          iseq = super
+          begin
+            iseq = super
 
-          ::Bootsnap::CompileCache::ISeq.cache_dir = LoadIseqExt.orig_cache_dir
+            ::Bootsnap::CompileCache::ISeq.cache_dir = LoadIseqExt.orig_cache_dir
 
-          # Bootsnap returns nil when the coverage is on,
-          # we fallback to our custom #compile_with_coverage
-          unless iseq
-            next unless defined?(Coverage) && Coverage.running?
+            # Bootsnap returns nil when the coverage is on,
+            # we fallback to our custom #compile_with_coverage
+            unless iseq
+              next unless defined?(Coverage) && Coverage.running?
 
-            iseq = RequireHooks::Iseq.compile_with_coverage(ctx, path)
+              iseq = RequireHooks::Iseq.compile_with_coverage(ctx, path)
+            end
+
+            iseq.eval
+            EMPTY_ISEQ
+          ensure
+            ::Bootsnap::CompileCache::ISeq.cache_dir = LoadIseqExt.orig_cache_dir
           end
-
-          iseq.eval
-          EMPTY_ISEQ
-        ensure
-          ::Bootsnap::CompileCache::ISeq.cache_dir = LoadIseqExt.orig_cache_dir
         end
       end
     end
