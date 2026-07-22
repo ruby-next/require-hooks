@@ -4,6 +4,7 @@ require:
   - rubocop-md
 
 AllCops:
+  TargetRubyVersion: 3.4
   Include:
     - '**/*.md'
 
