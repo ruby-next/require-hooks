@@ -128,7 +128,7 @@ Thus, if you introduce new source transformers or hijackers, you must invalidate
 
 ## Limitations
 
-- Coverage tracking is only supported if `eval` coverage tracking is enabled (`Coverage.start(eval: true, ...)` or `Simplecov.start { enable_coverage_for_eval; ... }`). Currently requires **Ruby 3.4+**.
+- Coverage tracking is only supported in Ruby 4.0.4+ (or 3.4.10+ for 3.4.x series); for older versions in 3.4 and 4.0 series, you can enable `eval` coverage tracking to make it work with Require Hooks (`Coverage.start(eval: true, ...)` or `SimpleCov.enable_coverage :eval`). For Ruby 3.2.x and 3.3.x, only around hooks are supported.
 - `Kernel#load` with a wrap argument (e.g., `load "some_path", true` or `load "some_path", MyModule)`) is not supported (fallbacked to the original implementation). The biggest challenge here is to support constants nesting.
 - Some very edgy symlinking scenarios are not supported (unlikely to affect real-world projects).
 

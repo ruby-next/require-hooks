@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.4.1 (2026-07-22)
+
+- Bring back Ruby 2.3 compatibility.
+
 ## 0.4.0 (2026-04-29)
 
 - Improved Bootsnap cache invalidation logic on hooks configuration changes.
