@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.5.0 (2026-08-26)
+
 - Use Bootsnap compiler namespaces for cache invalidation without changing Bootsnap's cache directory.
 
 ## 0.4.1 (2026-07-22)
