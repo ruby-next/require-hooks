@@ -2,6 +2,8 @@
 
 ## master
 
+- Use Bootsnap compiler namespaces for cache invalidation without changing Bootsnap's cache directory.
+
 ## 0.4.1 (2026-07-22)
 
 - Bring back Ruby 2.3 compatibility.

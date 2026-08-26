@@ -9,6 +9,8 @@ Bootsnap.setup(
   compile_cache_yaml: true
 )
 
+cache_dir = Bootsnap::CompileCache::ISeq.cache_dir
+
 require "require-hooks/setup"
 
 Bootsnap.instrumentation = ->(event, path) {
@@ -16,7 +18,7 @@ Bootsnap.instrumentation = ->(event, path) {
 }
 
 RequireHooks.source_transform do |path, source|
-  next unless path =~ /fixtures\/hello\.rb$/
+  next unless /fixtures\/hello\.rb$/.match?(path)
 
   source ||= File.read(path)
   source.gsub!("Hello", "Good-bye")
@@ -26,7 +28,7 @@ end
 $events = []
 
 RequireHooks.around_load do |path, &block|
-  next block.call unless path =~ /fixtures\/hello\.rb$/
+  next block.call unless /fixtures\/hello\.rb$/.match?(path)
 
   $events << "before-hook"
   block.call.tap { $events << "after-hook" }
@@ -35,7 +37,7 @@ end
 load File.join(__dir__, "hello.rb")
 
 RequireHooks.around_load do |path, &block|
-  next block.call unless path =~ /fixtures\/hello\.rb$/
+  next block.call unless /fixtures\/hello\.rb$/.match?(path)
 
   was_frozen_string_literal = RubyVM::InstructionSequence.compile_option[:frozen_string_literal]
   begin
@@ -49,3 +51,4 @@ end
 load File.join(__dir__, "hello.rb")
 
 puts "Events: #{$events.join(", ")}"
+puts "Cache directory unchanged: #{Bootsnap::CompileCache::ISeq.cache_dir == cache_dir}"

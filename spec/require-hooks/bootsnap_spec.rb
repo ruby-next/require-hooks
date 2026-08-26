@@ -24,6 +24,7 @@ describe "require-hooks: bootsnap mode" do
       output.should include("Good-bye (false)\n")
       output.should include("Good-bye (true)\n")
       output.should include("Events: before-hook, before-file, after-file, after-hook")
+      output.should include("Cache directory unchanged: true\n")
 
       # Only when the Bootsnap mode is used
       if @bootsnap_logs_available
@@ -43,6 +44,17 @@ describe "require-hooks: bootsnap mode" do
     ) do |_status, _output, err|
       err.should include("SyntaxError")
       err.should include("bootsnap-syntax-error.rb:1")
+    end
+  end
+
+  if Gem::Version.new(Gem::Specification.find_by_name("bootsnap").version) >= Gem::Version.new("1.24.0")
+    it "preserves an existing Bootsnap compiler selector" do
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s,
+        env: {"FROZEN" => "true", "REQUIRE_HOOKS_MODE" => "bootsnap"}
+      ) do |_status, output, _err|
+        output.should include("Good-bye (true)\n")
+      end
     end
   end
 

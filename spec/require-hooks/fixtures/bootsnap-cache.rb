@@ -9,6 +9,10 @@ Bootsnap.setup(
   compile_cache_yaml: true
 )
 
+if ENV["FROZEN"] == "true"
+  Bootsnap::CompileCache::ISeq.compiler_selector = ->(_) { Bootsnap::CompileCache::ISeq::FROZEN_STRING_LITERAL }
+end
+
 $events = []
 
 Bootsnap.instrumentation = ->(event, path) {
