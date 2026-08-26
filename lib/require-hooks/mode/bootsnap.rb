@@ -34,9 +34,7 @@ module RequireHooks
         ctx = RequireHooks.context_for(path)
         cache_dir = File.join(cache_dir, RequireHooks::Bootsnap.version_hash) unless ctx.empty?
 
-        # standard:disable Style/SuperArguments
-        super(path, cache_dir: cache_dir)
-        # standard:enable Style/SuperArguments
+        super
       end
     end
 
