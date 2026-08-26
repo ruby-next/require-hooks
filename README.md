@@ -124,7 +124,7 @@ require "require-hooks/setup"
 
 The _around load_ hooks are executed for all files independently of whether they are cached or not. Source transformation and hijacking is only done for non-cached files.
 
-Thus, if you introduce new source transformers or hijackers, you must invalidate the cache. (We plan to implement automatic invalidation in future versions.)
+Require Hooks separates cached instructions by hook configuration. New source transformers and hijackers invalidate affected cache entries automatically.
 
 ## Limitations
 
