@@ -9,6 +9,8 @@ Bootsnap.setup(
   compile_cache_yaml: true
 )
 
+transform_value = ENV.fetch("TRANSFORM_VALUE", "Good-bye")
+
 if ENV["FROZEN"] == "true"
   Bootsnap::CompileCache::ISeq.compiler_selector = ->(_) { Bootsnap::CompileCache::ISeq::FROZEN_STRING_LITERAL }
 end
@@ -22,9 +24,18 @@ Bootsnap.instrumentation = ->(event, path) {
 unless ENV["HOOKS"] == "false" || ARGV.include?("--no-hooks")
   require "require-hooks/setup"
 
+  if ENV["CACHE_KEY"]
+    contribution = if ENV["CACHE_KEY_CALLABLE"] == "true"
+      -> { ENV["CACHE_KEY"] }
+    else
+      ENV["CACHE_KEY"]
+    end
+    RequireHooks::Bootsnap.add_version_hash(contribution)
+  end
+
   RequireHooks.source_transform(patterns: ["*/fixtures/hello.rb"]) do |path, source|
     source ||= File.read(path)
-    source.gsub!("Hello", "Good-bye")
+    source.gsub!("Hello", transform_value)
     source
   end
 
@@ -40,7 +51,7 @@ unless ENV["HOOKS"] == "false" || ARGV.include?("--no-hooks")
   if ENV["HOOKS"] == "double-transform"
     RequireHooks.source_transform(patterns: ["*/fixtures/hello.rb"]) do |path, source|
       source ||= File.read(path)
-      source.gsub!("Good-bye", "Ciao")
+      source.gsub!(transform_value.to_s, "Ciao")
       source
     end
   end

@@ -41,11 +41,12 @@ module RequireHooks
     # Bootsnap 1.24+ compiler wrapper. Its namespace isolates transformed ISeqs
     # without changing Bootsnap's process-wide cache directory.
     class VersionedCompiler
-      attr_reader :namespace
+      attr_reader :namespace, :version_hash
 
-      def initialize(compiler)
+      def initialize(compiler, version_hash)
         @compiler = compiler
-        @namespace = "#{compiler.namespace}-require-hooks-#{RequireHooks::Bootsnap.version_hash}"
+        @version_hash = version_hash
+        @namespace = "#{compiler.namespace}-require-hooks-#{version_hash}"
       end
 
       def input_to_storage(source, path, *args)
@@ -120,11 +121,37 @@ module RequireHooks
         compiler = @original_compiler_selector&.call(path) || iseq.default_compiler
         return compiler if RequireHooks.context_for(path).empty?
 
-        @compilers[compiler] ||= VersionedCompiler.new(compiler)
+        version_hash = RequireHooks::Bootsnap.version_hash
+        cached = @compilers[compiler]
+        return cached if cached&.version_hash == version_hash
+
+        @compilers[compiler] = VersionedCompiler.new(compiler, version_hash)
+      end
+
+      def add_version_hash(value = nil, &block)
+        contributor = block || value
+        unless contributor.is_a?(String) || contributor.respond_to?(:call)
+          raise ArgumentError, "version hash contribution must be a String or callable"
+        end
+
+        @version_hash_contributors ||= []
+        @version_hash_contributors << (contributor.is_a?(String) ? contributor.dup.freeze : contributor)
+        @compilers&.clear
+        contributor
       end
 
       def version_hash
-        @version_hash ||= RequireHooks.contexts.values.map(&:to_cache_key).join("-")
+        return @version_hash unless @version_hash.nil?
+
+        context_keys = RequireHooks.contexts.values.map(&:to_cache_key)
+        contribution_keys = Array(@version_hash_contributors).map do |contributor|
+          value = contributor.respond_to?(:call) ? contributor.call : contributor
+          raise TypeError, "version hash contribution must return a String" unless value.is_a?(String)
+
+          Zlib.crc32(value).to_s
+        end.sort
+
+        (context_keys + contribution_keys).join("-")
       end
 
       def version_hash=(version_hash)

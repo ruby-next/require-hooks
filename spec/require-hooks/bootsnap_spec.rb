@@ -32,7 +32,7 @@ describe "require-hooks: bootsnap mode" do
         misses = output.scan(/miss: (.*)$/).flatten
         # Since we use different folders for different hook configuration,
         # we expect to see miss, not stale
-        misses.size.should == 2
+        misses.size.should == 4
       end
     end
   end
@@ -44,6 +44,45 @@ describe "require-hooks: bootsnap mode" do
     ) do |_status, output, _err|
       output.should include("custom\n")
     end
+  end
+
+  it "invalidates transformed code when an external cache key changes" do
+    run_ruby(
+      File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s,
+      env: {"TRANSFORM_VALUE" => "First", "CACHE_KEY" => "first", "CACHE_KEY_CALLABLE" => "true", "REQUIRE_HOOKS_MODE" => "bootsnap"}
+    ) do |_status, output, _err|
+      output.should include("First (false)\n")
+    end
+
+    run_ruby(
+      File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s,
+      env: {"TRANSFORM_VALUE" => "Second", "CACHE_KEY" => "second", "CACHE_KEY_CALLABLE" => "true", "REQUIRE_HOOKS_MODE" => "bootsnap"}
+    ) do |_status, output, _err|
+      output.should include("Second (false)\n")
+    end
+  end
+
+  it "includes hooks registered after a version hash read" do
+    run_ruby(
+      File.join(__dir__, "fixtures", "bootsnap-cache-key.rb").to_s,
+      env: {"EARLY_READ" => "true"}
+    ) do |_status, output, _err|
+      output.should include("early_read_changed=true\n")
+    end
+  end
+
+  it "does not depend on version hash contribution order" do
+    keys = []
+    ["first,second", "second,first"].each do |cache_keys|
+      run_ruby(
+        File.join(__dir__, "fixtures", "bootsnap-cache-key.rb").to_s,
+        env: {"CACHE_KEYS" => cache_keys}
+      ) do |_status, output, _err|
+        keys << output[/version_hash=(.*)$/, 1]
+      end
+    end
+
+    keys[0].should == keys[1]
   end
 
   it "re-raises syntax errors" do

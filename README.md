@@ -126,6 +126,14 @@ The _around load_ hooks are executed for all files independently of whether they
 
 Require Hooks separates cached instructions by hook configuration. New source transformers and hijackers invalidate affected cache entries automatically.
 
+If a transform depends on an external library or configuration, add that input to the cache key:
+
+```ruby
+RequireHooks::Bootsnap.add_version_hash { "parser-#{Parser::VERSION}-#{options_digest}" }
+```
+
+The value can be a String or a callable that returns a String. Require Hooks hashes each contribution and combines all contributions with its hook key. The callable runs when Require Hooks computes the key, so it does not freeze the key before later hooks register.
+
 ## Limitations
 
 - Coverage tracking is only supported in Ruby 4.0.4+ (or 3.4.10+ for 3.4.x series); for older versions in 3.4 and 4.0 series, you can enable `eval` coverage tracking to make it work with Require Hooks (`Coverage.start(eval: true, ...)` or `SimpleCov.enable_coverage :eval`). For Ruby 3.2.x and 3.3.x, only around hooks are supported.
