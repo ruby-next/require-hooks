@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.5.1 (2026-08-26)
+
 - Add `RequireHooks::Bootsnap.add_version_hash` for external cache inputs.
 
 ## 0.5.0 (2026-08-26)
