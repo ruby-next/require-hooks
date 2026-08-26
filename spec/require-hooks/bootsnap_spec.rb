@@ -53,6 +53,7 @@ describe "require-hooks: bootsnap mode" do
         File.join(__dir__, "fixtures", "bootsnap-cache.rb").to_s,
         env: {"FROZEN" => "true", "REQUIRE_HOOKS_MODE" => "bootsnap"}
       ) do |_status, output, _err|
+        output.should_not include("Good-bye (false)\n")
         output.should include("Good-bye (true)\n")
       end
     end
