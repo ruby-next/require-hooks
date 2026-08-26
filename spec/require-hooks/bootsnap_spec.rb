@@ -37,6 +37,15 @@ describe "require-hooks: bootsnap mode" do
     end
   end
 
+  it "allows overriding a previously read version hash" do
+    run_ruby(
+      File.join(__dir__, "fixtures", "bootsnap-version-hash.rb").to_s,
+      env: {"REQUIRE_HOOKS_MODE" => "bootsnap"}
+    ) do |_status, output, _err|
+      output.should include("custom\n")
+    end
+  end
+
   it "re-raises syntax errors" do
     run_ruby(
       File.join(__dir__, "fixtures", "bootsnap-syntax-error.rb").to_s,
