@@ -2,6 +2,8 @@
 
 ## master
 
+- Add `RequireHooks::Bootsnap.add_version_hash` for external cache inputs.
+
 ## 0.5.0 (2026-08-26)
 
 - Use Bootsnap compiler namespaces for cache invalidation without changing Bootsnap's cache directory.
