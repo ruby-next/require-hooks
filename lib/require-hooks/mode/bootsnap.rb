@@ -93,7 +93,7 @@ module RequireHooks
 
     class << self
       def version_hash
-        @version_key ||= RequireHooks.contexts.values.map(&:to_cache_key).join("-")
+        @version_hash ||= RequireHooks.contexts.values.map(&:to_cache_key).join("-")
       end
 
       attr_writer :version_hash
